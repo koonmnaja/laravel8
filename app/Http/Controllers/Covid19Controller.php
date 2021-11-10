@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
-Use App\Models\Covid19;
+use App\Models\Covid19;
+
 
 class Covid19Controller extends Controller
 {
@@ -13,12 +14,29 @@ class Covid19Controller extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $covid19s = Covid19::orderBy('date', 'desc')->get();
+        $perPage = 10;
+        $search = $request->get('search');
+        if (!empty($search)) {
+            //กรณีมีข้อมูลที่ต้องการ search จะมีการใช้คำสั่ง where และ orWhere
+            $covid19s = Covid19::where('country', 'LIKE', "%$search%")
+                ->orWhere('total', 'LIKE', "%$search%")
+                ->orWhere('active', 'LIKE', "%$search%")
+                ->orWhere('death', 'LIKE', "%$search%")
+                ->orWhere('recovered', 'LIKE', "%$search%")
+                ->orderBy('date', 'desc')->paginate($perPage);
+        } else {
+            //กรณีไม่มีข้อมูล search จะทำงานเหมือนเดิม
+            $covid19s = Covid19::orderBy('date', 'desc')->paginate($perPage);
+        }
 
-        return view('covid19/index' , compact('covid19s') );
+        //$covid19s = Covid19::orderBy('date', 'desc')->get();
+        //$covid19s = Covid19::orderBy('date', 'desc')->paginate($perPage);
+
+        return view('covid19/index', compact('covid19s'));
     }
+    
 
     /**
      * Show the form for creating a new resource.
@@ -49,7 +67,9 @@ class Covid19Controller extends Controller
      */
     public function show($id)
     {
-        //
+        $covid19 = Covid19::findOrFail($id);
+
+        return view('covid19.show', compact('covid19'));
     }
 
     /**
@@ -60,7 +80,7 @@ class Covid19Controller extends Controller
      */
     public function edit($id)
     {
-        //
+        
     }
 
     /**
